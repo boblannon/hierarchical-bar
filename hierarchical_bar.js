@@ -14,7 +14,7 @@ var st_data;
 var mykeys = [];
 var mytree;
 
-var x_scale; 
+var x_scale;
 
 var colorScale;
 colorScale = d3.scale.ordinal().domain([1,2,3]).range(['#006D2C','#31A354','#74C476']);
@@ -45,10 +45,10 @@ function sum(a,attr_name) {
         var tot = _.reduce(
                        a,
                        function(memo,obj){
-                          return memo + parseFloat(obj[attr_name]); 
-                       }, 
-                        0); 
-        return tot; 
+                          return memo + parseFloat(obj[attr_name]);
+                       },
+                        0);
+        return tot;
 }
 
 function sum(a,attr_name) {
@@ -58,10 +58,10 @@ function sum(a,attr_name) {
         var tot = _.reduce(
                        a,
                        function(memo,obj){
-                          return memo + parseFloat(obj[attr_name]); 
-                       }, 
-                        0); 
-        return tot; 
+                          return memo + parseFloat(obj[attr_name]);
+                       },
+                        0);
+        return tot;
 }
 
 /*
@@ -95,7 +95,7 @@ function make_subtrees(flat_data, attr_name_list, value_attr) {
 d3.json("industry_names.json",function(names) {
         name_map = names;
 
-    d3.json("subindustry_totals.json",function(st){ 
+    d3.json("subindustry_totals.json",function(st){
             var subtrees;
             st_data = st;
             subtrees =   _.sortBy(
@@ -103,7 +103,7 @@ d3.json("industry_names.json",function(names) {
                                 _.sortBy(
                                     _.groupBy(
                                             _.sortBy(
-                                                st_data, 
+                                                st_data,
                                                 function(sd) { return -1 * parseFloat(sd.total_contributions); }
                                                 ),
                                             function(d){ var index = d.sector_id+"_"+d.industry_id; return index; }
@@ -112,34 +112,34 @@ d3.json("industry_names.json",function(names) {
                                         ),
                                      function(i){return i[0].sector_id;}
                                      ),
-                                  function(ja){ var ind = 0; 
+                                  function(ja){ var ind = 0;
                                     for (j in ja) {  ind += sum(ja[j],'total_contributions');}
                                     return -1 * ind;}
                                 );
-            console.log(subtrees);
+            //console.log(subtrees);
             mytree = {'name':'All Sectors','value':0.0,'children':[]};
-            for (i in subtrees) { 
-                    var tr = {}; 
-                    tr['name'] = name_map[subtrees[i][0][0].sector_id]; 
+            for (i in subtrees) {
+                    var tr = {};
+                    tr['name'] = name_map[subtrees[i][0][0].sector_id];
                     tr['value'] = 0;
-                    tr['children'] = []; 
-                    for (j in subtrees[i]) { 
-                            var itr = {}; 
-                            itr['name'] = name_map[subtrees[i][j][0].industry_id]; 
+                    tr['children'] = [];
+                    for (j in subtrees[i]) {
+                            var itr = {};
+                            itr['name'] = name_map[subtrees[i][j][0].industry_id];
                             itr['value'] = 0;
-                            itr['children'] = []; 
-                            for (k in subtrees[i][j]) { 
-                                    var sitr = {}; 
-                                    sitr['name'] = name_map[subtrees[i][j][k].subindustry_id]; 
-                                    sitr['value'] = parseFloat(subtrees[i][j][k].total_contributions); 
+                            itr['children'] = [];
+                            for (k in subtrees[i][j]) {
+                                    var sitr = {};
+                                    sitr['name'] = name_map[subtrees[i][j][k].subindustry_id];
+                                    sitr['value'] = parseFloat(subtrees[i][j][k].total_contributions);
                                     itr['children'].push(sitr)
                                     itr['value'] += sitr['value']
-                            } 
+                            }
                     tr['children'].push(itr)
                     tr['value'] += itr['value']
-                    } 
+                    }
             mytree['children'].push(tr);
-            mytree['value'] += tr['value']; 
+            mytree['value'] += tr['value'];
             }
             maxval = d3.max(mytree.children,function(x){ return x.value });
             x_scale = d3.scale.linear().domain([0,maxval]).range([0,maxBar]);
@@ -172,7 +172,7 @@ function update(source) {
                                         } else {
                                             return true;
                                             }});
-  
+
   var nodeEnter = node.enter().append("svg:g")
       .classed("node",true)
       .classed("selected",function(d) { if (d.children) {
@@ -216,7 +216,7 @@ function update(source) {
 
   // rotates selected arrows 90 degrees
   d3.selectAll(".selected path")
-      .attr("transform", function(d) { 
+      .attr("transform", function(d) {
                     //if ( d.children ) {
                         x = indent*d.depth;
                         y = barHeight/4;
@@ -228,10 +228,10 @@ function update(source) {
 
   // rotates deselected arrows back
   d3.selectAll(".notselected path")
-      .attr("transform", function(d) { 
+      .attr("transform", function(d) {
                         return "rotate(0)translate(0,0)";
                     });
-                    
+
   nodeEnter.append("svg:text")
       .attr("dy", 3.5)
       .attr("dx", 5.5)
@@ -248,24 +248,24 @@ function update(source) {
 
   nodeEnter.transition()
       .duration(duration)
-      .attr("transform", function(d) { 
+      .attr("transform", function(d) {
                             return "translate(" + 0 + "," + d.x + ")"; })
       .style("opacity", 1);
 
   node.transition()
       .duration(duration)
-      .attr("transform", function(d) { 
+      .attr("transform", function(d) {
                             return "translate(" + 0 + "," + d.x + ")"; })
       .style("opacity", 1);
-  
+
   // Transition exiting nodes to the parent's new position.
   node.exit().transition()
       .duration(duration)
-      .attr("transform", function(d) { 
+      .attr("transform", function(d) {
                             return "translate(" + 0 + "," + source.x + ")"; })
       .style("opacity", 1e-6)
       .remove();
-  
+
   nodes.forEach(function(d) {
     d.x0 = d.x;
     d.y0 = d.y;
