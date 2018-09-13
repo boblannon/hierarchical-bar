@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <!-- <script type="text/javascript" src="d3.min.js"></script> -->
+    <!-- <script type="text/javascript" src="d3.layout.min.js"></script> -->
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://d3js.org/d3.layout.v5.min.js"></script>
+    <script type="text/javascript" src="underscore.js"></script>
+    <style type="text/css">
+
+/*
+.node rect {
+  cursor: pointer;
+  fill: #fff;
+  fill-opacity: .5;
+  stroke: #3182bd;
+  stroke-width: 1.5px;
+}
+*/
+
+.selector {
+    cursor: pointer;
+    fill: none;
+}
+
+.selector:hover {
+    fill: #000;
+    fill-opacity: .5;
+}
+
+.node text {
+  font: 11px sans-serif;
+  pointer-events: none;
+}
+
+path.link {
+  fill: none;
+  stroke: #9ecae1;
+  stroke-width: 1.5px;
+}
+
+.arrow {
+        width: 0;
+        height: 0;
+        border-top: 5px solid transparent;
+        border-bottom: 5px solid transparent;
+
+        border-left: 5px solid black;
+}
+
+.selected .arrow {
+        width: 0;
+        height: 0;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+
+        border-top: 5px solid black;
+}
+
+    </style>
+</head>
+<body>
+    <div id="chart"></div>
+
+    <script type="text/javascript" src="hierarchical_bar.js">
+    </script>
+  </body>
+</html>
