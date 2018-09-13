@@ -185,7 +185,7 @@ function update(source) {
                                         } else {
                                             return true;
                                             }})
-      .attr("transform", function(d) { return "translate(" + source.y0 + "," + source.x0 + ")"; })
+      .attr("transform", function(d) { let x0 = source.x0 || 0; let y0 = source.y0 || 0; return `translate(${y0},${x0})`; })
       .style("opacity", 1e-6)
       .on("click",click);
 
