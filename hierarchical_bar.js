@@ -12,7 +12,7 @@ var w = 960,
 
 var st_data;
 var mykeys = [];
-var mytree;
+var myroot;
 
 var x_scale;
 
@@ -25,6 +25,7 @@ grayScale = d3.scaleOrdinal().domain([1,2,3]).range([0.3,0.2,0.1]);
 var tree = d3.tree()
     .size([h, 100]);
     // .value(function(d) {  return d.value; });
+
 
 // var diagonal = d3.svg.diagonal()
 //     .projection(function(d) { return [d.y, d.x]; });
@@ -118,156 +119,148 @@ d3.json("industry_names.json").then(function(names) {
                                     return -1 * ind;}
                                 );
             //console.log(subtrees);
-            mytree = {'name':'All Sectors','value':0.0,'children':[]};
+            let autoinc = 0;
+            myroot = {'name':'All Sectors', 'id': autoinc, 'value':0.0, 'depth': 0, 'children':[]};
             for (i in subtrees) {
                     var tr = {};
                     tr['name'] = name_map[subtrees[i][0][0].sector_id];
                     tr['value'] = 0;
                     tr['children'] = [];
+                    tr['selected'] = false;
+                    tr['id'] = ++autoinc;
+                    //tr['depth'] = 1;
                     for (j in subtrees[i]) {
                             var itr = {};
                             itr['name'] = name_map[subtrees[i][j][0].industry_id];
                             itr['value'] = 0;
+                            //itr['depth'] = 2;
+                            itr['id'] = ++autoinc;
                             itr['children'] = [];
+                            itr['selected'] = false;
                             for (k in subtrees[i][j]) {
                                     var sitr = {};
                                     sitr['name'] = name_map[subtrees[i][j][k].subindustry_id];
                                     sitr['value'] = parseFloat(subtrees[i][j][k].total_contributions);
+                                    //sitr['depth'] = 3;
+                                    sitr['id'] = ++autoinc;
+                                    sitr['selected'] = false;
                                     itr['children'].push(sitr)
                                     itr['value'] += sitr['value']
                             }
                     tr['children'].push(itr)
                     tr['value'] += itr['value']
                     }
-            mytree['children'].push(tr);
-            mytree['value'] += tr['value'];
+                myroot['children'].push(tr);
+                myroot['value'] += tr['value'];
             }
-            maxval = d3.max(mytree.children,function(x){ return x.value });
+            myhier = d3.hierarchy(myroot);
+            console.log(myhier);
+            maxval = d3.max(myhier.children,function(x){ return x.value });
             x_scale = d3.scaleLinear().domain([0,maxval]).range([0,maxBar]);
-            mytree.children.forEach(toggleAll);
-            update(root = mytree);
+            //myhier.children.forEach(toggleAll);
+            update(myhier);
         }
     );
 });
 
 function update(source) {
 
-  var nodes = source.children;
-  testvar = nodes;
+  // toggle(source);
+  console.log(source);
+  var new_node_data = source.children;
+  // testvar = nodes;
 
   //Compute the "layout".
-  nodes.forEach(function(n, i) {
-          n.x = i * barHeight;
+  let lowest = barHeight;
+  new_node_data.forEach(function(n, i) {
+          n.y = i * barHeight;
+          n.x = source.x || 0;
+          lowest += barHeight;
   });
 
   // Update the nodes…
-  var node = vis.selectAll("g.node")
-      .data(nodes, function(d) { return d.id || (d.id = ++i); })
-      .classed("selected",function(d) { if (d.children) {
-                                            return true;
-                                        } else {
-                                            return false;
-                                            }})
-      .classed("notselected",function(d) { if (d.children) {
-                                            return false;
-                                        } else {
-                                            return true;
-                                            }});
+  var nodes = vis.selectAll("g.node")
+      .classed("selected",function(d) { if (d.id == source.id) {
+          return !d.selected;
+      } else { return d.selected; } });
 
-  var nodeEnter = node.enter().append("svg:g")
-      .classed("node",true)
-      .classed("selected",function(d) { if (d.children) {
-                                            return true;
-                                        } else {
-                                            return false;
-                                            }})
-      .classed("notselected",function(d) { if (d.children) {
-                                            return false;
-                                        } else {
-                                            return true;
-                                            }})
-      .attr("transform", function(d) { let x0 = source.x0 || 0; let y0 = source.y0 || 0; return `translate(${y0},${x0})`; })
-      .style("opacity", 1e-6)
-      .on("click",click);
-
-  // Enter any new nodes at the parent's previous position.
-  nodeEnter.append("svg:rect")
-      .classed("selector",true)
-      .attr("y", -barHeight / 2)
-      .attr("height", function(d){ console.log(d); if (d.depth > 0) { return barHeight}; })
-      .attr("width", 290)
-      .style("fill",function(d) { if (d.depth > 0) { return 'black'; }})
-      .style("fill-opacity",function(d){ return grayScale(d.depth); });
-      //.on("click",click);
-
-  nodeEnter.append("svg:path")
-      .attr("d",function(d) {
-              return 'M '+(indent*d.depth)+' -'+(barHeight/4)+' l 0 '+(triangleBase)+' l 5 -5 l -5 -5';
-              })
-      .style("fill",function(d) {
-              if (d.children || d._children) {
-                if (d.depth > 0) {
-                    return 'black';
-                } else {
+      new_nodes = nodes.data(new_node_data).enter().append("svg:g")
+          .classed("node",true)
+          .attr("transform", function(d) { return `translate(${d.x},${d.y})`; })
+          //.style("opacity", 1e-6)
+          .on("click",click);
+      new_nodes.append("svg:rect")
+          .classed("selector",true)
+          .attr("y", -barHeight / 2)
+          .attr("height", function(d){ if (d.depth > 0) { return barHeight}; })
+          .attr("width", 290)
+          .style("fill",function(d) { if (d.depth > 0) { return 'black'; }})
+          .style("fill-opacity",function(d){ return grayScale(d.depth); });
+      new_nodes.append("svg:path")
+          .attr("d",function(d) {
+                  let depth = d.depth;
+                  let depthIndent = indent * depth;
+                  return 'M '+ depthIndent +' -'+(barHeight/4)+' l 0 '+(triangleBase)+' l 5 -5 l -5 -5';
+                  })
+          .style("fill",function(d) {
+                  if (d.children || d._children) {
+                    if (d.depth > 0) {
+                        return 'black';
+                    } else {
+                        return 'none';
+                    }
+                  } else {
                     return 'none';
-                }
-              } else {
-                return 'none';
-              }});
+                  }});
+      new_nodes.append("svg:text")
+          .attr("dy", 3.5)
+          .attr("dx", 5.5)
+          .text(function(d) { if (d.depth > 0) { return d.name; }})
+          .attr("x",280)
+          .style("text-anchor","end");
+      new_nodes.append("svg:rect")
+          .attr("x",300)
+          .attr("y", -barHeight / 2 + 2.5)
+          .attr("height", function (d){ if (d.depth > 0) {return barHeight - 5;}})
+          .attr("width",function(d){ return x_scale(d.value);})
+          .attr("fill",function(d){ return colorScale(d.depth);});
+
+  // rotates deselected arrows back
+  d3.selectAll(".selected path")
+      .attr("transform", function(d) {
+                        return "rotate(0)translate(0,0)";
+                    });
 
   // rotates selected arrows 90 degrees
-  d3.selectAll(".selected path")
+  d3.selectAll(":not(.selected) path")
       .attr("transform", function(d) {
                     //if ( d.children ) {
                         x = indent*d.depth;
                         y = barHeight/4;
                         tstring = "rotate(90," + x + ",-" + y +")";
-                        tstring += " translate(0,-" + triangleBase + ")";
+                        tstring += " translate(-" + triangleBase + ", 0)";
                         return tstring;
                         });
                     //} else if ( d._children ) {
 
-  // rotates deselected arrows back
-  d3.selectAll(".notselected path")
-      .attr("transform", function(d) {
-                        return "rotate(0)translate(0,0)";
-                    });
+  new_nodes.merge(nodes);
 
-  nodeEnter.append("svg:text")
-      .attr("dy", 3.5)
-      .attr("dx", 5.5)
-      .text(function(d) { if (d.depth > 0) { return d.name; }})
-      .attr("x",280)
-      .style("text-anchor","end");
-
-  nodeEnter.append("svg:rect")
-      .attr("x",300)
-      .attr("y", -barHeight / 2 + 2.5)
-      .attr("height", function (d){ if (d.depth > 0) {return barHeight - 5;}})
-      .attr("width",function(d){ return x_scale(d.value);})
-      .attr("fill",function(d){ return colorScale(d.depth);});
-
-  nodeEnter.transition()
+  nodes.transition()
       .duration(duration)
       .attr("transform", function(d) {
-                            return "translate(" + 0 + "," + d.x + ")"; })
+                            return "translate(" + d.x + "," + d.y + ")"; })
       .style("opacity", 1);
 
-  node.transition()
-      .duration(duration)
-      .attr("transform", function(d) {
-                            return "translate(" + 0 + "," + d.x + ")"; })
-      .style("opacity", 1);
 
-  // Transition exiting nodes to the parent's new position.
-  node.exit().transition()
-      .duration(duration)
-      .attr("transform", function(d) {
-                            return "translate(" + 0 + "," + source.x + ")"; })
-      .style("opacity", 1e-6)
-      .remove();
-
-  nodes.forEach(function(d) {
+  //Transition exiting nodes to the parent's new position.
+  nodes.exit().transition()
+       .duration(duration)
+       .attr("transform", function(d) {
+           new_y = d.y + lowest;
+           return "translate(" + d.x + "," + new_y + ")"; });
+      //.remove();
+  testvar = nodes;
+  nodes.each(function(d) {
     d.x0 = d.x;
     d.y0 = d.y;
   });
@@ -276,23 +269,14 @@ function update(source) {
 
 // Toggle values on click and update.
 function click(d) {
-    toggle(d);
     update(d);
 }
 
 function toggle(d) {
-  if (d.children) {
-    d._children = d.children;
-    d.children = null;
-  } else {
-    d.children = d._children;
-    d._children = null;
-  }
+    d.selected = !d.selected
 }
 
 function toggleAll(d) {
-    if (d.children) {
-        d.children.forEach(toggleAll);
-        toggle(d);
-    }
+    d.children.forEach(toggleAll);
+    toggle(d);
 }
